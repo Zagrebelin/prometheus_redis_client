@@ -97,7 +97,7 @@ class BaseMetric(object):
         self.labelnames = labelnames or []
         self.name = name
         self.registry = registry
-        self.registry.add_metric(self)
+        self.registry.add_metric(self, fail_on_doubles=False)
 
     def doc_string(self) -> DocRepresentation:
         return DocRepresentation(

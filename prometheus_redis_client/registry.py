@@ -75,7 +75,7 @@ class Registry(object):
             m.output() for m in all_metric
         ))
 
-    def add_metric(self, *metrics):
+    def add_metric(self, *metrics, fail_on_doubles=True):
         already_added = set([
             m.name for m in self._metrics
         ])
@@ -83,13 +83,14 @@ class Registry(object):
             m.name for m in metrics
         ])
         doubles = already_added.intersection(new_metrics)
-        if doubles:
+        if doubles and fail_on_doubles:
             raise ValueError("Metrics {} already added".format(
                 ", ".join(doubles),
             ))
 
         for m in metrics:
-            self._metrics.append(m)
+            if m.name not in already_added:
+                self._metrics.append(m)
 
     def set_redis(self, redis):
         self.redis = redis

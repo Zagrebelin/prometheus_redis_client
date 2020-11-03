@@ -7,7 +7,6 @@ import prometheus_redis_client as prom
 
 
 class TestCommonGauge(object):
-
     def test_none_value_exception(self):
         with MetricEnvironment():
 
@@ -159,3 +158,13 @@ class TestCommonGauge(object):
 
                 const.set(12)
             assert mock_logger.called
+
+    def test_double_registration(self):
+        with MetricEnvironment() as env:
+            const1 = prom.CommonGauge(
+                name="test_counter2", documentation="Counter documentation"
+            )
+            const2 = prom.CommonGauge(
+                name="test_counter2", documentation="Counter documentation"
+            )
+            assert len(prom.REGISTRY._metrics) == 1
