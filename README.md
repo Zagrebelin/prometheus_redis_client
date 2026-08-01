@@ -168,6 +168,14 @@ You cat export metrics to text. Example:
     from prometheus_redis_client import REGISTRY
     REGISTRY.output()
 
+Like `prometheus_client.CollectorRegistry`, the `Registry` also provides:
+
+    for family in REGISTRY.collect():
+        print(family.name, family.samples)
+
+    # useful in tests
+    REGISTRY.get_sample_value("metric_name", {"label": "value"})
+
 
 ### Compatibility with prometheus-client
 

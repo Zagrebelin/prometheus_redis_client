@@ -55,6 +55,24 @@ class Refresher(object):
             time.sleep(self.timeout_granule)
 
 
+class MetricFamily(object):
+    """A single metric family and its samples (mirrors metrics_core.Metric)."""
+
+    def __init__(self, name, documentation, type, samples):
+        self.name = name
+        self.documentation = documentation
+        self.type = type
+        self.samples = samples
+
+    def output(self) -> str:
+        doc = "# HELP {name} {doc}\n# TYPE {name} {type}".format(
+            name=self.name,
+            doc=self.documentation,
+            type=self.type,
+        )
+        return "\n".join([doc] + sorted(s.output() for s in self.samples))
+
+
 class Registry(object):
 
     def __init__(self, redis: StrictRedis = None, refresher: Refresher = None):
@@ -63,19 +81,33 @@ class Registry(object):
         self.refresher = refresher or Refresher()
         self.set_redis(redis)
 
-    def output(self, names=None) -> str:
-        all_metric = []
-        for metric in self._metrics:
+    def collect(self, names=None):
+        """Yield metric families from the metrics in the registry."""
+        metrics = list(self._metrics)
+        for metric in metrics:
             if names is not None and metric.name not in names:
                 continue
-            all_metric.append(metric.doc_string())
-            ms = metric.collect()
-            all_metric += sorted([
-                p for p in ms
-            ], key=lambda x: x.output())
-        return "\n".join((
-            m.output() for m in all_metric
-        ))
+            yield MetricFamily(
+                name=metric.name,
+                documentation=metric.documentation,
+                type=metric.type,
+                samples=metric.collect(),
+            )
+
+    def output(self, names=None) -> str:
+        return "\n".join(family.output() for family in self.collect(names=names))
+
+    def get_sample_value(self, name, labels=None):
+        """Return the sample value, or None if not found.
+
+        Intended for use in unittests, mirrors prometheus_client.
+        """
+        labels = labels or {}
+        for family in self.collect():
+            for sample in family.samples:
+                if sample.name == name and (sample.labels or {}) == labels:
+                    return float(sample.value)
+        return None
 
     def add_metric(self, *metrics, fail_on_doubles=True):
         already_added = set([

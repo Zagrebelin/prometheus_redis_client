@@ -161,3 +161,74 @@ class TestTime(object):
             output = prom.REGISTRY.output()
             assert 's_count{host="123.123.123.123",url="/home/"} 1' in output
             assert 's_sum{host="123.123.123.123",url="/home/"} 0.01' in output
+
+
+class TestRegistryCollect(object):
+
+    def test_collect_yields_families(self):
+        with MetricEnvironment():
+            counter = prom.Counter("c1", "doc")
+            counter.inc(2)
+
+            families = list(prom.REGISTRY.collect())
+            assert len(families) == 1
+            family = families[0]
+            assert family.name == "c1_total"
+            assert family.documentation == "doc"
+            assert family.type == "counter"
+            assert len(family.samples) == 1
+            assert family.samples[0].name == "c1_total"
+            assert family.samples[0].labels == {}
+            assert family.samples[0].value == "2"
+
+    def test_collect_with_labels(self):
+        with MetricEnvironment():
+            counter = prom.Counter(
+                "c1", "doc", labelnames=["host", "url"],
+            )
+            counter.labels(host="123.123.123.123", url="/home/").inc(2)
+
+            families = list(prom.REGISTRY.collect())
+            sample = families[0].samples[0]
+            assert sample.labels == {"host": "123.123.123.123", "url": "/home/"}
+            assert sample.value == "2"
+
+    def test_collect_names_filter(self):
+        with MetricEnvironment():
+            prom.Counter("c1", "doc").inc(1)
+            prom.Counter("c2", "doc").inc(1)
+
+            families = list(prom.REGISTRY.collect(names=["c2_total"]))
+            assert [f.name for f in families] == ["c2_total"]
+
+            assert list(prom.REGISTRY.collect(names=[])) == []
+
+    def test_output_unchanged_by_refactor(self):
+        with MetricEnvironment():
+            counter = prom.Counter("c1", "doc")
+            counter.inc(2)
+
+            assert prom.REGISTRY.output() == (
+                "# HELP c1_total doc\n"
+                "# TYPE c1_total counter\n"
+                "c1_total 2"
+            )
+
+    def test_output_names_filter(self):
+        with MetricEnvironment():
+            prom.Counter("c1", "doc").inc(1)
+            prom.Counter("c2", "doc").inc(1)
+
+            output = prom.REGISTRY.output(names=["c2_total"])
+            assert "c1_total" not in output
+            assert "c2_total 1" in output
+
+    def test_get_sample_value(self):
+        with MetricEnvironment():
+            counter = prom.Counter("c1", "doc", labelnames=["host"])
+            counter.labels(host="a").inc(3)
+
+            assert prom.REGISTRY.get_sample_value("c1_total", {"host": "a"}) == 3.0
+            assert prom.REGISTRY.get_sample_value("c1_total", {"host": "b"}) is None
+            assert prom.REGISTRY.get_sample_value("c1_total") is None
+            assert prom.REGISTRY.get_sample_value("missing") is None

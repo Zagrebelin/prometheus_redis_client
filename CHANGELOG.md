@@ -13,6 +13,8 @@
   to `Summary` and `Histogram`, mirroring `prometheus_client.context_managers.Timer`.
 * Add `PrometheusDjangoView` in `prometheus_redis_client.django`
   (Prometheus federation filter via `?name[]=` supported).
+* Add `Registry.collect()` and `Registry.get_sample_value()`
+  mirroring `prometheus_client.CollectorRegistry`; `output()` is built on top of `collect()`.
 * Document method-level differences to be fixed later.
 
 
