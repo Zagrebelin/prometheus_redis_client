@@ -1,6 +1,16 @@
 # Changelog
 
 
+#### 0.8.0
+
+* Metric constructors are drop-in compatible with `prometheus_client`:
+  `namespace`, `subsystem`, `unit` params and full metric name building.
+* `Counter` is always exported with `_total` suffix like `prometheus_client`.
+* `Histogram` gets prometheus-client default buckets.
+* Accept (and ignore) extra `prometheus_client` constructor params
+  (`multiprocess_mode`, `_labelvalues`).
+
+
 #### 0.7.0
 
 * Move packaging from distutils to setuptools.

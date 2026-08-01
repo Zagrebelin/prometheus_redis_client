@@ -19,16 +19,16 @@ class TestCounter(object):
             group_key = counter.get_metric_group_key()
             metric_key = counter.get_metric_key({})
 
-            assert redis.smembers(group_key) == {b'test_counter1:e30='}
+            assert redis.smembers(group_key) == {b'test_counter1_total:e30='}
             assert int(redis.get(metric_key)) == 1
 
             counter.inc(3)
             assert float(redis.get(metric_key)) == 4
 
             assert (prom.REGISTRY.output()) == (
-                "# HELP test_counter1 Counter documentation\n"
-                "# TYPE test_counter1 counter\n"
-                "test_counter1 4"
+                "# HELP test_counter1_total Counter documentation\n"
+                "# TYPE test_counter1_total counter\n"
+                "test_counter1_total 4"
             )
 
     def test_interface_with_labels(self):
@@ -53,7 +53,7 @@ class TestCounter(object):
             group_key = counter.get_metric_group_key()
             metric_key = counter.get_metric_key(labels)
 
-            assert redis.smembers(group_key) == {b'test_counter2:eyJob3N0IjogIjEyMy4xMjMuMTIzLjEyMyIsICJ1cmwiOiAiL2hvbWUvIn0='}
+            assert redis.smembers(group_key) == {b'test_counter2_total:eyJob3N0IjogIjEyMy4xMjMuMTIzLjEyMyIsICJ1cmwiOiAiL2hvbWUvIn0='}
             assert int(redis.get(metric_key)) == 2
 
             assert counter.labels(**labels).inc(3) == 5
@@ -94,7 +94,7 @@ class TestCounter(object):
             group_key = counter.get_metric_group_key()
             metric_key = counter.get_metric_key({})
 
-            assert redis.smembers(group_key) == {b'test_counter1:e30='}
+            assert redis.smembers(group_key) == {b'test_counter1_total:e30='}
             assert int(redis.get(metric_key)) == 1
 
             counter.set(30)
@@ -104,7 +104,7 @@ class TestCounter(object):
             assert float(redis.get(metric_key)) == 10
 
             assert (prom.REGISTRY.output()) == (
-                "# HELP test_counter1 Counter documentation\n"
-                "# TYPE test_counter1 counter\n"
-                "test_counter1 10"
+                "# HELP test_counter1_total Counter documentation\n"
+                "# TYPE test_counter1_total counter\n"
+                "test_counter1_total 10"
             )

@@ -9,6 +9,7 @@ from prometheus_redis_client.helpers import timeit
 from prometheus_redis_client.registry import Registry, REGISTRY
 
 DEFAULT_GAUGE_INDEX_KEY = 'GLOBAL_GAUGE_INDEX'
+DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0)
 
 
 class Metric(BaseMetric):
@@ -45,7 +46,13 @@ class CommonGauge(Metric):
 
     def __init__(self, name: str,
                  documentation: str, labelnames: list = None,
-                 registry: Registry=REGISTRY, expire: float = None):
+                 namespace: str = '',
+                 subsystem: str = '',
+                 unit: str = '',
+                 registry: Registry=REGISTRY,
+                 _labelvalues: list = None,
+                 expire: float = None,
+                 **kwargs):
         """
         Construct CommonGauge metric.
         :param name: name of metric
@@ -55,7 +62,7 @@ class CommonGauge(Metric):
         :param expire: equivalent Redis `expire`; after that timeout Redis delete key. It useful when
         you want know if metric does not set a long time.
         """
-        super().__init__(name, documentation, labelnames, registry)
+        super().__init__(name, documentation, labelnames, namespace, subsystem, unit, registry, _labelvalues, **kwargs)
         self._expire = expire
 
     def set(self, value, labels=None, expire: float = None):
@@ -187,8 +194,10 @@ class Gauge(Metric):
                  expire=default_expire,
                  refresh_enable=True,
                  gauge_index_key: str = DEFAULT_GAUGE_INDEX_KEY,
+                 multiprocess_mode: str = 'all',
                  **kwargs):
         super().__init__(*args, **kwargs)
+        self.multiprocess_mode = multiprocess_mode
         self.gauge_index_key = gauge_index_key
         self.refresh_enable = refresh_enable
         self._refresher_added = False
@@ -298,7 +307,7 @@ class Histogram(Metric):
     type = 'histogram'
     wrapped_functions_names = ['observe', ]
 
-    def __init__(self, *args, buckets: list, **kwargs):
+    def __init__(self, *args, buckets: list = DEFAULT_BUCKETS, **kwargs):
         super().__init__(*args, **kwargs)
         self.buckets = sorted(buckets, reverse=True)
         self.timeit = partial(timeit, metric_callback=self.observe)

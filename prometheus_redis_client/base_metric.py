@@ -2,10 +2,33 @@
 import json
 import base64
 import logging
+import re
 from typing import List
 from functools import partial, wraps
 
 from prometheus_redis_client.registry import Registry, REGISTRY
+
+
+METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:][a-zA-Z0-9_:]*$')
+
+
+def build_full_name(metric_type, name, namespace, subsystem, unit):
+    """Compose full metric name like prometheus_client does."""
+    if not name:
+        raise ValueError('Metric name should not be empty')
+    full_name = ''
+    if namespace:
+        full_name += namespace + '_'
+    if subsystem:
+        full_name += subsystem + '_'
+    full_name += name
+    if metric_type == 'counter' and full_name.endswith('_total'):
+        full_name = full_name[:-6]  # Munge to OpenMetrics.
+    if unit and not full_name.endswith("_" + unit):
+        full_name += "_" + unit
+    if not METRIC_NAME_RE.match(full_name):
+        raise ValueError("invalid metric name " + full_name)
+    return full_name
 
 
 logger = logging.getLogger(__name__)
@@ -92,10 +115,19 @@ class BaseMetric(object):
 
     def __init__(self, name: str,
                  documentation: str, labelnames: list=None,
-                 registry: Registry=REGISTRY):
+                 namespace: str = '',
+                 subsystem: str = '',
+                 unit: str = '',
+                 registry: Registry=REGISTRY,
+                 _labelvalues: list=None,
+                 **kwargs):
         self.documentation = documentation
         self.labelnames = labelnames or []
-        self.name = name
+        self.name = build_full_name(
+            self.type, name, namespace, subsystem, unit,
+        )
+        if self.type == 'counter':
+            self.name += '_total'
         self.registry = registry
         self.registry.add_metric(self, fail_on_doubles=False)
 

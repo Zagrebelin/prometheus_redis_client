@@ -169,6 +169,45 @@ You cat export metrics to text. Example:
     REGISTRY.output()
 
 
+### Compatibility with prometheus-client
+
+Metric constructors are drop-in compatible with `prometheus_client`:
+
+    from prometheus_redis_client import Counter, Gauge, Histogram
+
+    requests = Counter(
+        "requests_total",
+        "Total requests",
+        namespace="app",
+        subsystem="http",
+        unit="seconds",
+    )
+
+All metrics accept `name`, `documentation`, `labelnames`, `namespace`, `subsystem`, `unit` and `registry`.
+`Histogram` accepts `buckets` with prometheus-client default buckets when omitted.
+Like `prometheus_client`, a `Counter` is always exported with the `_total` suffix:
+`Counter("foo_total", ...)` and `Counter("foo", ...)` both produce `foo_total`.
+Extra `prometheus_client` constructor parameters (e.g. `multiprocess_mode`) are accepted and ignored.
+
+#### Known method-level differences (TODO)
+
+Method/API parity with `prometheus_client` is not implemented yet and should be fixed later:
+
+- `Counter`:
+  - `reset()` is missing;
+  - `count_exceptions()` is missing;
+  - `inc()` only accepts `int` and has no `exemplar` support.
+- `Gauge`:
+  - `set_to_current_time()`, `track_inprogress()`, `time()` and `set_function()` are missing;
+  - `multiprocess_mode` is accepted but ignored.
+- `Summary` / `Histogram`:
+  - `time()` (decorator + context manager) is not implemented; only `timeit()` decorator exists.
+- Output format:
+  - `Histogram` does not export the `+Inf` bucket and has no `_created` series;
+  - no exemplars and no timestamps;
+  - `labels()` returns a `WithLabels` wrapper rather than a child metric object.
+
+
 ### Contribution
 
 Welcome for contribution.
