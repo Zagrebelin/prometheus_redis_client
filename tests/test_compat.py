@@ -95,3 +95,69 @@ class TestCompatParams(object):
             )
             assert common_gauge.name == "app_cg"
             assert common_gauge._expire == 5
+
+
+class TestTime(object):
+
+    def test_histogram_time_decorator(self):
+        with MetricEnvironment():
+            histogram = prom.Histogram("h", "doc")
+
+            @histogram.time()
+            def simple_func():
+                import time
+                time.sleep(0.01)
+                return
+
+            simple_func()
+
+            output = prom.REGISTRY.output()
+            assert "h_count 1" in output
+            assert "h_sum 0.01" in output
+
+    def test_histogram_time_with_labels_decorator(self):
+        with MetricEnvironment():
+            histogram = prom.Histogram(
+                "h", "doc", labelnames=["host", "url"],
+            )
+
+            @histogram.labels(host="123.123.123.123", url="/home/").time()
+            def simple_func():
+                import time
+                time.sleep(0.01)
+                return
+
+            simple_func()
+
+            output = prom.REGISTRY.output()
+            assert 'h_bucket{host="123.123.123.123",le="0.5",url="/home/"} 1' in output
+            assert 'h_count{host="123.123.123.123",url="/home/"} 1' in output
+            assert 'h_sum{host="123.123.123.123",url="/home/"} 0.01' in output
+
+    def test_histogram_time_context_manager(self):
+        with MetricEnvironment():
+            histogram = prom.Histogram("h", "doc")
+
+            with histogram.time():
+                pass
+
+            output = prom.REGISTRY.output()
+            assert "h_count 1" in output
+
+    def test_summary_time_decorator_with_labels(self):
+        with MetricEnvironment():
+            summary = prom.Summary(
+                "s", "doc", labelnames=["host", "url"],
+            )
+
+            @summary.labels(host="123.123.123.123", url="/home/").time()
+            def simple_func():
+                import time
+                time.sleep(0.01)
+                return
+
+            simple_func()
+
+            output = prom.REGISTRY.output()
+            assert 's_count{host="123.123.123.123",url="/home/"} 1' in output
+            assert 's_sum{host="123.123.123.123",url="/home/"} 0.01' in output

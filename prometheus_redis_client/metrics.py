@@ -2,7 +2,8 @@ import copy
 import json
 import collections
 import threading
-from functools import partial
+import time
+from functools import partial, wraps
 
 from prometheus_redis_client.base_metric import BaseMetric, MetricRepresentation, silent_wrapper
 from prometheus_redis_client.helpers import timeit
@@ -10,6 +11,39 @@ from prometheus_redis_client.registry import Registry, REGISTRY
 
 DEFAULT_GAUGE_INDEX_KEY = 'GLOBAL_GAUGE_INDEX'
 DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0)
+
+
+class Timer(object):
+    """Time a block of code or a function and observe the duration.
+
+    Can be used both as a decorator and as a context manager,
+    mirroring ``prometheus_client.context_managers.Timer``.
+    """
+
+    def __init__(self, metric, labels=None):
+        self._metric = metric
+        self._labels = labels or {}
+
+    def _new_timer(self):
+        return self.__class__(self._metric, self._labels)
+
+    def __enter__(self):
+        self._start = time.time()
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        # Time can go backwards.
+        duration = max(time.time() - self._start, 0)
+        self._metric.observe(duration, labels=self._labels)
+
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            # Obtaining new instance of timer every time
+            # ensures thread safety and reentrancy.
+            with self._new_timer():
+                return func(*args, **kwargs)
+        return wrapped
 
 
 class Metric(BaseMetric):
@@ -159,16 +193,18 @@ class Counter(Metric):
 
 class Summary(Metric):
     type = 'summary'
-    wrapped_functions_names = ['observe', ]
+    wrapped_functions_names = ['observe', 'time']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.timeit = partial(timeit, metric_callback=self.observe)
 
+    def time(self, labels=None):
+        return Timer(self, labels=labels)
+
     def observe(self, value, labels=None):
         labels = labels or {}
         self._check_labels(labels)
-        print('DEBUG:', value, labels)
         return self._observer(value, labels)
 
     @silent_wrapper
@@ -305,12 +341,15 @@ class Gauge(Metric):
 
 class Histogram(Metric):
     type = 'histogram'
-    wrapped_functions_names = ['observe', ]
+    wrapped_functions_names = ['observe', 'time']
 
     def __init__(self, *args, buckets: list = DEFAULT_BUCKETS, **kwargs):
         super().__init__(*args, **kwargs)
         self.buckets = sorted(buckets, reverse=True)
         self.timeit = partial(timeit, metric_callback=self.observe)
+
+    def time(self, labels=None):
+        return Timer(self, labels=labels)
 
     def observe(self, value, labels=None):
         labels = labels or {}

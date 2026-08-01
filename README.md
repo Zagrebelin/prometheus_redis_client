@@ -200,8 +200,6 @@ Method/API parity with `prometheus_client` is not implemented yet and should be 
 - `Gauge`:
   - `set_to_current_time()`, `track_inprogress()`, `time()` and `set_function()` are missing;
   - `multiprocess_mode` is accepted but ignored.
-- `Summary` / `Histogram`:
-  - `time()` (decorator + context manager) is not implemented; only `timeit()` decorator exists.
 - Output format:
   - `Histogram` does not export the `+Inf` bucket and has no `_created` series;
   - no exemplars and no timestamps;

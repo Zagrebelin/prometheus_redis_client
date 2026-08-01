@@ -9,6 +9,9 @@
 * `Histogram` gets prometheus-client default buckets.
 * Accept (and ignore) extra `prometheus_client` constructor params
   (`multiprocess_mode`, `_labelvalues`).
+* Add `time()` (decorator + context manager, also via `labels().time()`)
+  to `Summary` and `Histogram`, mirroring `prometheus_client.context_managers.Timer`.
+* Document method-level differences to be fixed later.
 
 
 #### 0.7.0
