@@ -1,6 +1,13 @@
 # Changelog
 
 
+#### 0.7.0
+
+* Move packaging from distutils to setuptools.
+* Update tox to Python 3.12-3.14 and redis 4.6.
+* Modernize test environment setup (PROMETHEUS_REDIS_URI).
+
+
 #### 0.5.0
 
 * Add `set` to Counter (@darkman66)

@@ -7,3 +7,6 @@ Pipfile
 Pipfile.lock
 MANIFEST
 *.pyc
+.tox/
+.venv/
+*.egg-info/

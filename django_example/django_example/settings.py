@@ -71,7 +71,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_example.wsgi.application'
 
-PROMETHEUS_REDIS_URI = os.environ.get("PROMETHEUS_REDIS_URI", "redis://redis:6379")
+PROMETHEUS_REDIS_URI = os.environ.get("PROMETHEUS_REDIS_URI", "redis://localhost:6379")
 
 
 # Database
