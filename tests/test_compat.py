@@ -193,6 +193,17 @@ class TestRegistryCollect(object):
             assert sample.labels == {"host": "123.123.123.123", "url": "/home/"}
             assert sample.value == "2"
 
+    def test_samples_tuple_compatible(self):
+        with MetricEnvironment():
+            counter = prom.Counter("c1", "doc", labelnames=["host"])
+            counter.labels(host="a").inc(2)
+
+            sample = list(prom.REGISTRY.collect())[0].samples[0]
+            assert sample[0] == "c1_total"
+            assert sample[1] == {"host": "a"}
+            assert sample[2] == "2"
+            assert tuple(sample) == ("c1_total", {"host": "a"}, "2")
+
     def test_collect_names_filter(self):
         with MetricEnvironment():
             prom.Counter("c1", "doc").inc(1)

@@ -3,6 +3,7 @@ import json
 import base64
 import logging
 import re
+from collections import namedtuple
 from typing import List
 from functools import partial, wraps
 
@@ -40,12 +41,10 @@ class BaseRepresentation(object):
         raise NotImplementedError
 
 
-class MetricRepresentation(BaseRepresentation):
-
-    def __init__(self, name, labels, value):
-        self.name = name
-        self.labels = labels
-        self.value = value
+class MetricRepresentation(
+        namedtuple('MetricRepresentation', ['name', 'labels', 'value']),
+        BaseRepresentation,
+):
 
     def output(self) -> str:
         if self.labels is None:
