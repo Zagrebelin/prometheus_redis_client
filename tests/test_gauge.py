@@ -79,7 +79,7 @@ class TestGauge(object):
             assert prom.REGISTRY.output() == (
                 "# HELP test_gauge Gauge Documentation\n"
                 "# TYPE test_gauge gauge\n"
-                "test_gauge{gauge_index=\"%s\",name=\"test\"} 14"
+                "test_gauge{gauge_index=\"%s\",name=\"test\"} 14.0"
             ) % gauge_index
 
     def test_auto_clean(self):

@@ -108,8 +108,8 @@ class TestCommonGauge(object):
             assert (prom.REGISTRY.output()) == (
                 "# HELP test_const2 Const documentation\n"
                 "# TYPE test_const2 gauge\n"
-                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12\n"
-                "test_const2{host=\"124.124.124.124\",url=\"/home/\"} 24"
+                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12.0\n"
+                "test_const2{host=\"124.124.124.124\",url=\"/home/\"} 24.0"
             )
 
             time.sleep(1)
@@ -118,17 +118,17 @@ class TestCommonGauge(object):
             assert (prom.REGISTRY.output()) == (
                 "# HELP test_const2 Const documentation\n"
                 "# TYPE test_const2 gauge\n"
-                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12\n"
-                "test_const2{host=\"124.124.124.124\",url=\"/home/\"} 24\n"
-                "test_const2{host=\"136.136.136.136\",url=\"/home/\"} 36"
+                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12.0\n"
+                "test_const2{host=\"124.124.124.124\",url=\"/home/\"} 24.0\n"
+                "test_const2{host=\"136.136.136.136\",url=\"/home/\"} 36.0"
             )
             time.sleep(1.5)
 
             assert (prom.REGISTRY.output()) == (
                 "# HELP test_const2 Const documentation\n"
                 "# TYPE test_const2 gauge\n"
-                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12\n"
-                "test_const2{host=\"136.136.136.136\",url=\"/home/\"} 36"
+                "test_const2{host=\"123.123.123.123\",url=\"/home/\"} 12.0\n"
+                "test_const2{host=\"136.136.136.136\",url=\"/home/\"} 36.0"
             )
 
             time.sleep(1)

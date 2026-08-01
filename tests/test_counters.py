@@ -28,7 +28,7 @@ class TestCounter(object):
             assert (prom.REGISTRY.output()) == (
                 "# HELP test_counter1_total Counter documentation\n"
                 "# TYPE test_counter1_total counter\n"
-                "test_counter1_total 4"
+                "test_counter1_total 4.0"
             )
 
     def test_interface_with_labels(self):
@@ -106,5 +106,5 @@ class TestCounter(object):
             assert (prom.REGISTRY.output()) == (
                 "# HELP test_counter1_total Counter documentation\n"
                 "# TYPE test_counter1_total counter\n"
-                "test_counter1_total 10"
+                "test_counter1_total 10.0"
             )

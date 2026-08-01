@@ -179,7 +179,7 @@ class TestRegistryCollect(object):
             assert len(family.samples) == 1
             assert family.samples[0].name == "c1_total"
             assert family.samples[0].labels == {}
-            assert family.samples[0].value == "2"
+            assert family.samples[0].value == 2.0
 
     def test_collect_with_labels(self):
         with MetricEnvironment():
@@ -191,7 +191,7 @@ class TestRegistryCollect(object):
             families = list(prom.REGISTRY.collect())
             sample = families[0].samples[0]
             assert sample.labels == {"host": "123.123.123.123", "url": "/home/"}
-            assert sample.value == "2"
+            assert sample.value == 2.0
 
     def test_samples_tuple_compatible(self):
         with MetricEnvironment():
@@ -201,8 +201,8 @@ class TestRegistryCollect(object):
             sample = list(prom.REGISTRY.collect())[0].samples[0]
             assert sample[0] == "c1_total"
             assert sample[1] == {"host": "a"}
-            assert sample[2] == "2"
-            assert tuple(sample) == ("c1_total", {"host": "a"}, "2")
+            assert sample[2] == 2.0
+            assert tuple(sample) == ("c1_total", {"host": "a"}, 2.0)
 
     def test_collect_names_filter(self):
         with MetricEnvironment():
@@ -222,7 +222,7 @@ class TestRegistryCollect(object):
             assert prom.REGISTRY.output() == (
                 "# HELP c1_total doc\n"
                 "# TYPE c1_total counter\n"
-                "c1_total 2"
+                "c1_total 2.0"
             )
 
     def test_output_names_filter(self):
@@ -232,7 +232,7 @@ class TestRegistryCollect(object):
 
             output = prom.REGISTRY.output(names=["c2_total"])
             assert "c1_total" not in output
-            assert "c2_total 1" in output
+            assert "c2_total 1.0" in output
 
     def test_get_sample_value(self):
         with MetricEnvironment():

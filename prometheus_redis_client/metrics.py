@@ -13,6 +13,17 @@ DEFAULT_GAUGE_INDEX_KEY = 'GLOBAL_GAUGE_INDEX'
 DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0)
 
 
+def _float_to_go_string(value) -> str:
+    """Format a float like prometheus_client does for label values."""
+    if value == float('inf'):
+        return '+Inf'
+    if value == float('-inf'):
+        return '-Inf'
+    if value != value:
+        return 'NaN'
+    return str(value)
+
+
 class Timer(object):
     """Time a block of code or a function and observe the duration.
 
@@ -64,7 +75,7 @@ class Metric(BaseMetric):
             result.append(MetricRepresentation(
                 name=name,
                 labels=labels,
-                value=value.decode('utf-8'),
+                value=float(value.decode('utf-8')),
             ))
         return result
 
@@ -412,7 +423,7 @@ class Histogram(Metric):
             MetricRepresentation(
                 self.name + "_bucket",
                 labels=json.loads(ls),
-                value=0,
+                value=0.0,
             ) for ls in missing_metrics_values
         ]
 
@@ -421,15 +432,23 @@ class Histogram(Metric):
                 MetricRepresentation(
                     self.name + "_sum",
                     labels={},
-                    value=0,
+                    value=0.0,
                 ),
             )
             missing_values.append(
                 MetricRepresentation(
                     self.name + "_count",
                     labels={},
-                    value=0,
+                    value=0.0,
                 ),
             )
 
-        return redis_metrics + missing_values
+        samples = []
+        for sample in redis_metrics + missing_values:
+            labels = sample.labels
+            if labels and 'le' in labels:
+                labels = dict(labels)
+                labels['le'] = _float_to_go_string(float(labels['le']))
+                sample = sample._replace(labels=labels)
+            samples.append(sample)
+        return samples

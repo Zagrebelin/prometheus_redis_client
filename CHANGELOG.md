@@ -15,6 +15,10 @@
   (Prometheus federation filter via `?name[]=` supported).
 * Add `Registry.collect()` and `Registry.get_sample_value()`
   mirroring `prometheus_client.CollectorRegistry`; `output()` is built on top of `collect()`.
+* Collected sample values are `float` and `le` labels use prometheus
+  text format (`"+Inf"` for infinity), matching `prometheus_client`.
+* `MetricRepresentation` samples are tuple-compatible (`sample[0]`/`[1]`/`[2]`)
+  like `prometheus_client` metric samples.
 * Document method-level differences to be fixed later.
 
 

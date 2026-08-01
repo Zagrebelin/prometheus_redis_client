@@ -34,7 +34,7 @@ class TestSummary(object):
             assert prom.REGISTRY.output() == (
                 "# HELP test_summary Summary documentation\n"
                 "# TYPE test_summary summary\n"
-                "test_summary_count 2\n"
+                "test_summary_count 2.0\n"
                 "test_summary_sum 4.5"
             )
 
@@ -75,7 +75,7 @@ class TestSummary(object):
             assert prom.REGISTRY.output() == (
                 '# HELP test_summary Summary documentation\n'
                 '# TYPE test_summary summary\n'
-                'test_summary_count{host="123.123.123.123",url="/home/"} 2\n'
+                'test_summary_count{host="123.123.123.123",url="/home/"} 2.0\n'
                 'test_summary_sum{host="123.123.123.123",url="/home/"} 5.1'
             )
 
@@ -123,6 +123,6 @@ class TestSummary(object):
             assert prom.REGISTRY.output().startswith(
                 '# HELP test_summary Summary documentation\n'
                 '# TYPE test_summary summary\n'
-                'test_summary_count{name="Hi!"} 1\n'
+                'test_summary_count{name="Hi!"} 1.0\n'
                 'test_summary_sum{name="Hi!"} 0.01'
             )
