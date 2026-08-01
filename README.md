@@ -189,6 +189,19 @@ Like `prometheus_client`, a `Counter` is always exported with the `_total` suffi
 `Counter("foo_total", ...)` and `Counter("foo", ...)` both produce `foo_total`.
 Extra `prometheus_client` constructor parameters (e.g. `multiprocess_mode`) are accepted and ignored.
 
+##### Django view
+
+Serve metrics from a Django app with a class-based view compatible with `prometheus_client.django`:
+
+    from prometheus_redis_client.django import PrometheusDjangoView
+
+    urlpatterns = [
+        path("metrics", PrometheusDjangoView.as_view()),
+    ]
+
+`Django` is an optional dependency, required only for this subpackage.
+The view supports the Prometheus federation filter via `?name[]=metric_name`.
+
 #### Known method-level differences (TODO)
 
 Method/API parity with `prometheus_client` is not implemented yet and should be fixed later:

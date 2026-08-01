@@ -11,6 +11,8 @@
   (`multiprocess_mode`, `_labelvalues`).
 * Add `time()` (decorator + context manager, also via `labels().time()`)
   to `Summary` and `Histogram`, mirroring `prometheus_client.context_managers.Timer`.
+* Add `PrometheusDjangoView` in `prometheus_redis_client.django`
+  (Prometheus federation filter via `?name[]=` supported).
 * Document method-level differences to be fixed later.
 
 

@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='prometheus_redis_client',
-    packages=['prometheus_redis_client'],
-    version='0.7.0',
+    packages=['prometheus_redis_client', 'prometheus_redis_client.django'],
+    version='0.8.0',
     description='Python prometheus multiprocessing client which used redis as metric storage.',
     author='Belousov Alex',
     author_email='belousov.aka.alfa@gmail.com',

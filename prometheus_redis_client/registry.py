@@ -63,9 +63,11 @@ class Registry(object):
         self.refresher = refresher or Refresher()
         self.set_redis(redis)
 
-    def output(self) -> str:
+    def output(self, names=None) -> str:
         all_metric = []
         for metric in self._metrics:
+            if names is not None and metric.name not in names:
+                continue
             all_metric.append(metric.doc_string())
             ms = metric.collect()
             all_metric += sorted([
