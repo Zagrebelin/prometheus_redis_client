@@ -126,6 +126,13 @@ class Registry(object):
             if m.name not in already_added:
                 self._metrics.append(m)
 
+    def unregister(self, collector):
+        if collector not in self._metrics:
+            raise KeyError(
+                "Metric collector {} is not registered".format(collector),
+            )
+        self._metrics.remove(collector)
+
     def set_redis(self, redis):
         self.redis = redis
 

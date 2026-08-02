@@ -261,3 +261,36 @@ class TestRegistryCollect(object):
             assert prom.REGISTRY.get_sample_value("c1_total", {"host": "b"}) is None
             assert prom.REGISTRY.get_sample_value("c1_total") is None
             assert prom.REGISTRY.get_sample_value("missing") is None
+
+
+class TestRegistryUnregister(object):
+
+    def test_unregister_removes_metric(self):
+        with MetricEnvironment():
+            counter = prom.Counter("c1", "doc")
+            counter.inc(2)
+
+            assert list(prom.REGISTRY.collect()) != []
+
+            prom.REGISTRY.unregister(counter)
+
+            assert list(prom.REGISTRY.collect()) == []
+            assert prom.REGISTRY.output() == ""
+            assert prom.REGISTRY.get_sample_value("c1_total") is None
+
+    def test_unregister_unknown_metric_raises_key_error(self):
+        with MetricEnvironment():
+            with pytest.raises(KeyError):
+                prom.REGISTRY.unregister(object())
+
+    def test_re_register_after_unregister_same_name(self):
+        with MetricEnvironment():
+            first = prom.Counter("c1", "doc")
+            first.inc(2)
+            prom.REGISTRY.unregister(first)
+
+            second = prom.Counter("c1", "doc")
+            second.inc(5)
+
+            assert list(prom.REGISTRY.collect()) != []
+            assert prom.REGISTRY.get_sample_value("c1_total") == 7.0
