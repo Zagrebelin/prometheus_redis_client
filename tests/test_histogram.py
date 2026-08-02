@@ -45,6 +45,7 @@ class TestHistogram(object):
             assert prom.REGISTRY.output() == (
                 '# HELP test_histogram Histogram documentation\n'
                 '# TYPE test_histogram histogram\n'
+                'test_histogram_bucket{le="+Inf"} 2.0\n'
                 'test_histogram_bucket{le="1.0"} 0.0\n'
                 'test_histogram_bucket{le="20.0"} 1.0\n'
                 'test_histogram_bucket{le="25.5"} 2.0\n'
@@ -102,10 +103,12 @@ class TestHistogram(object):
             assert prom.REGISTRY.output() == (
                 '# HELP test_histogram Histogram documentation\n'
                 '# TYPE test_histogram histogram\n'
+                'test_histogram_bucket{host="123.123.123.123",le="+Inf",url="/home/"} 2.0\n'
                 'test_histogram_bucket{host="123.123.123.123",le="0.0",url="/home/"} 0.0\n'
                 'test_histogram_bucket{host="123.123.123.123",le="1.0",url="/home/"} 1.0\n'
                 'test_histogram_bucket{host="123.123.123.123",le="2.001",url="/home/"} 1.0\n'
                 'test_histogram_bucket{host="123.123.123.123",le="3.0",url="/home/"} 2.0\n'
+                'test_histogram_bucket{le="+Inf"} 0.0\n'
                 'test_histogram_bucket{le="0.0"} 0.0\n'
                 'test_histogram_bucket{le="1.0"} 0.0\n'
                 'test_histogram_bucket{le="2.001"} 0.0\n'
@@ -161,6 +164,7 @@ class TestHistogram(object):
             assert prom.REGISTRY.output().startswith(
                 '# HELP test_histogram Histogram documentation\n'
                 '# TYPE test_histogram histogram\n'
+                'test_histogram_bucket{le="+Inf"} 1.0\n'
                 'test_histogram_bucket{le="0.0"} 0.0\n'
                 'test_histogram_bucket{le="1.0"} 1.0\n'
                 'test_histogram_bucket{le="2.001"} 1.0\n'
@@ -168,3 +172,31 @@ class TestHistogram(object):
                 'test_histogram_count 1.0\n'
                 'test_histogram_sum 0.01'
             )
+
+    def test_collect_always_emits_inf_bucket(self):
+        with MetricEnvironment() as redis:
+            histogram = prom.Histogram(
+                name="test_histogram",
+                documentation="Histogram documentation",
+                buckets=[1, float('inf')],
+            )
+
+            histogram.observe(0.5)
+            histogram.observe(2)
+
+            output = prom.REGISTRY.output()
+            assert 'test_histogram_bucket{le="+Inf"} 2.0' in output
+            assert 'test_histogram_bucket{le="1.0"} 1.0' in output
+            assert 'le="inf"' not in output
+
+    def test_unobserved_histogram_emits_zero_inf_bucket(self):
+        with MetricEnvironment():
+            histogram = prom.Histogram(
+                name="test_histogram",
+                documentation="Histogram documentation",
+                buckets=[1],
+            )
+
+            output = prom.REGISTRY.output()
+            assert 'test_histogram_bucket{le="+Inf"} 0.0' in output
+            assert 'test_histogram_bucket{le="1.0"} 0.0' in output

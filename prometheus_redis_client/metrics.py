@@ -77,6 +77,17 @@ class Metric(BaseMetric):
                 labels=labels,
                 value=float(value.decode('utf-8')),
             ))
+        if (
+            not result
+            and not self.labelnames
+            and not self._observed
+            and self.type in ('counter', 'gauge')
+        ):
+            result.append(MetricRepresentation(
+                name=self.name,
+                labels={},
+                value=0.0,
+            ))
         return result
 
     def cleanup(self):
@@ -115,6 +126,7 @@ class CommonGauge(Metric):
         self._check_labels(labels)
         if value is None:
             raise ValueError('value can not be None')
+        self._observed = True
         self._set(value, labels, expire=expire or self._expire)
 
     @silent_wrapper
@@ -130,11 +142,13 @@ class CommonGauge(Metric):
     def inc(self, value: float = 1, labels=None, expire: float = None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._inc(value, labels, expire=expire or self._expire)
 
     def dec(self, value: float = 1, labels=None, expire: float = None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._inc(-value, labels, expire=expire or self._expire)
 
     @silent_wrapper
@@ -165,6 +179,7 @@ class Counter(Metric):
             raise ValueError("Value should be int, got {}".format(
                 type(value)
             ))
+        self._observed = True
         return self._inc(value, labels)
 
     @silent_wrapper
@@ -189,6 +204,7 @@ class Counter(Metric):
             raise ValueError("Value should be int, got {}".format(
                 type(value)
             ))
+        self._observed = True
         return self._set(value, labels)
 
     @silent_wrapper
@@ -216,6 +232,7 @@ class Summary(Metric):
     def observe(self, value, labels=None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._observer(value, labels)
 
     @silent_wrapper
@@ -269,11 +286,13 @@ class Gauge(Metric):
     def inc(self, value: float, labels: dict = None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._inc(value, labels)
 
     def dec(self, value: float, labels: dict = None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._inc(-value, labels)
 
     @silent_wrapper
@@ -296,6 +315,7 @@ class Gauge(Metric):
     def set(self, value: float, labels:dict = None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._set(value, labels)
 
     @silent_wrapper
@@ -356,7 +376,10 @@ class Histogram(Metric):
 
     def __init__(self, *args, buckets: list = DEFAULT_BUCKETS, **kwargs):
         super().__init__(*args, **kwargs)
-        self.buckets = sorted(buckets, reverse=True)
+        self.buckets = sorted(
+            [b for b in buckets if b != float('inf')],
+            reverse=True,
+        )
         self.timeit = partial(timeit, metric_callback=self.observe)
 
     def time(self, labels=None):
@@ -365,6 +388,7 @@ class Histogram(Metric):
     def observe(self, value, labels=None):
         labels = labels or {}
         self._check_labels(labels)
+        self._observed = True
         return self._a_observe(value, labels)
 
     @silent_wrapper
@@ -451,4 +475,22 @@ class Histogram(Metric):
                 labels['le'] = _float_to_go_string(float(labels['le']))
                 sample = sample._replace(labels=labels)
             samples.append(sample)
+
+        counts = {}
+        groups = {}
+        for sample in samples:
+            labels = {
+                k: v for k, v in sample.labels.items() if k != 'le'
+            }
+            key = json.dumps(labels, sort_keys=True)
+            groups.setdefault(key, labels)
+            if sample.name == self.name + "_count":
+                counts[key] = float(sample.value)
+
+        for key, labels in groups.items():
+            samples.append(MetricRepresentation(
+                self.name + "_bucket",
+                labels={**labels, 'le': '+Inf'},
+                value=counts.get(key, 0.0),
+            ))
         return samples

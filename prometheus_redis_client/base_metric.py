@@ -122,6 +122,7 @@ class BaseMetric(object):
                  **kwargs):
         self.documentation = documentation
         self.labelnames = labelnames or []
+        self._observed = False
         self._name = build_full_name(
             self.type, name, namespace, subsystem, unit,
         )

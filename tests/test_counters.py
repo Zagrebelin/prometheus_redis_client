@@ -108,3 +108,31 @@ class TestCounter(object):
                 "# TYPE test_counter1_total counter\n"
                 "test_counter1_total 10.0"
             )
+
+    def test_unobserved_unlabeled_counter_collects_zero(self):
+        with MetricEnvironment():
+            counter = prom.Counter(
+                name="test_counter1",
+                documentation="Counter documentation"
+            )
+
+            assert counter.collect() == [(
+                "test_counter1_total",
+                {},
+                0.0,
+            )]
+            assert prom.REGISTRY.output() == (
+                "# HELP test_counter1_total Counter documentation\n"
+                "# TYPE test_counter1_total counter\n"
+                "test_counter1_total 0.0"
+            )
+
+    def test_unobserved_labeled_counter_collects_nothing(self):
+        with MetricEnvironment():
+            counter = prom.Counter(
+                name="test_counter2",
+                documentation="Counter documentation",
+                labelnames=["host", "url"],
+            )
+
+            assert counter.collect() == []
