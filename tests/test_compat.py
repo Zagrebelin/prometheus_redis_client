@@ -11,6 +11,24 @@ class TestNameBuilding(object):
             assert prom.Counter("foo", "doc").name == "foo_total"
             assert prom.Counter("foo_total", "doc").name == "foo_total"
 
+    def test_name_attribute_matches_prometheus_client(self):
+        with MetricEnvironment():
+            counter = prom.Counter("foo", "doc")
+            assert counter._name == "foo"
+            assert counter.name == "foo_total"
+
+            counter_total = prom.Counter("foo_total", "doc")
+            assert counter_total._name == "foo"
+            assert counter_total.name == "foo_total"
+
+            gauge = prom.Gauge("foo", "doc")
+            assert gauge._name == "foo"
+            assert gauge.name == "foo"
+
+            histogram = prom.Histogram("foo", "doc")
+            assert histogram._name == "foo"
+            assert histogram.name == "foo"
+
     def test_namespace_subsystem_unit(self):
         with MetricEnvironment():
             counter = prom.Counter(

@@ -122,9 +122,10 @@ class BaseMetric(object):
                  **kwargs):
         self.documentation = documentation
         self.labelnames = labelnames or []
-        self.name = build_full_name(
+        self._name = build_full_name(
             self.type, name, namespace, subsystem, unit,
         )
+        self.name = self._name
         if self.type == 'counter':
             self.name += '_total'
         self.registry = registry

@@ -19,6 +19,8 @@
   text format (`"+Inf"` for infinity), matching `prometheus_client`.
 * `MetricRepresentation` samples are tuple-compatible (`sample[0]`/`[1]`/`[2]`)
   like `prometheus_client` metric samples.
+* Metrics expose `_name` (full name without the counter `_total` suffix),
+  mirroring `prometheus_client.MetricWrapperBase`.
 * Document method-level differences to be fixed later.
 
 
